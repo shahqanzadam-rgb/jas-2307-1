@@ -1,0 +1,349 @@
+import React, { useState, useEffect } from 'react';
+import { BookOpen, CheckCircle2, AlertCircle, RefreshCcw, ChevronRight, Heart, Users, ClipboardList, Radio, Video, Maximize, Target } from 'lucide-react';
+
+const App = () => {
+  const [activeTask, setActiveTask] = useState('start');
+  const [score, setScore] = useState(0);
+  const [showFeedback, setShowFeedback] = useState(null);
+  const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
+
+  // Телестудия уақыты
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date().toLocaleTimeString()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // 1-тапсырма: Оқиға реттілігі
+  const [sequence, setSequence] = useState([
+    { id: 1, text: "Зоология мұғалімі Оспановтың бақа сұрауы", order: null },
+    { id: 2, text: "Майқанованың сумкасына бақа салу", order: null },
+    { id: 3, text: "Мұғалімнің шошынып ауырып қалуы", order: null },
+    { id: 4, text: "Қожаның жоңышқа арасында кеш батқанша жатуы", order: null },
+    { id: 5, text: "Анасының Қожаға ренжіп жылауы", order: null }
+  ]);
+  const [nextOrder, setNextOrder] = useState(1);
+
+  // 2-тапсырма: Сәйкестендіру
+  const [matchSelection, setMatchSelection] = useState({ left: null, right: null });
+  const [matches, setMatches] = useState([]);
+  const characters = [
+    { id: 'c1', name: 'Оспанов', action: 'Бақа әкелуді тапсырды' },
+    { id: 'c2', name: 'Майқанова', action: 'Сөмкесінен бақа шығып, шошып қалды' },
+    { id: 'c3', name: 'Әжесі', action: '«Шешең саған ашулы» деп ескертті' },
+    { id: 'c4', name: 'Анасы', action: 'Қоңыр көздері суық, жылап жатты' }
+  ];
+  const actions = [...characters].sort(() => Math.random() - 0.5);
+
+  const handleSequenceClick = (id) => {
+    if (sequence.find(s => s.id === id).order) return;
+    setSequence(sequence.map(s => s.id === id ? { ...s, order: nextOrder } : s));
+    setNextOrder(nextOrder + 1);
+    if (nextOrder === 5) {
+      const isCorrect = sequence.every(s => (s.id === id ? nextOrder : s.order) === s.id);
+      if (isCorrect) setScore(s => s + 20);
+    }
+  };
+
+  const handleMatch = (type, id) => {
+    const newSelection = { ...matchSelection, [type]: id };
+    setMatchSelection(newSelection);
+
+    if (newSelection.left && newSelection.right) {
+      const char = characters.find(c => c.id === newSelection.left);
+      if (char.action === newSelection.right) {
+        setMatches([...matches, newSelection.left]);
+        setScore(s => s + 10);
+      }
+      setMatchSelection({ left: null, right: null });
+    }
+  };
+
+  const resetGame = () => {
+    setActiveTask('start');
+    setScore(0);
+    setMatches([]);
+    setSequence(sequence.map(s => ({ ...s, order: null })));
+    setNextOrder(1);
+    setShowFeedback(null);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-900 p-4 md:p-8 font-sans text-slate-100 relative overflow-hidden">
+      
+      {/* Студия эффектілері */}
+      <div className="absolute inset-0 pointer-events-none z-10">
+        <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]"></div>
+        
+        {/* Жиектер */}
+        <div className="absolute top-10 left-10 w-20 h-20 border-t-4 border-l-4 border-white/10"></div>
+        <div className="absolute top-10 right-10 w-20 h-20 border-t-4 border-r-4 border-white/10"></div>
+        <div className="absolute bottom-10 left-10 w-20 h-20 border-b-4 border-l-4 border-white/10"></div>
+        <div className="absolute bottom-10 right-10 w-20 h-20 border-b-4 border-r-4 border-white/10"></div>
+
+        {/* Студия индикаторлары */}
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-6 bg-black/40 px-6 py-2 rounded-full backdrop-blur-md border border-white/10">
+           <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse"></div>
+              <span className="text-xs font-bold tracking-widest">REC</span>
+           </div>
+           <div className="w-[1px] h-4 bg-white/20"></div>
+           <div className="flex items-center gap-2 text-emerald-400">
+              <Radio size={14} />
+              <span className="text-xs font-bold uppercase">LIVE: JAZ2307_STREAM</span>
+           </div>
+           <div className="w-[1px] h-4 bg-white/20"></div>
+           <span className="text-xs font-mono">{currentTime}</span>
+        </div>
+
+        {/* Станция логотипі (Watermark) */}
+        <div className="absolute bottom-12 right-12 flex items-center gap-2 opacity-30 select-none">
+          <div className="text-right">
+            <div className="text-xs font-black tracking-tighter uppercase">Production by</div>
+            <div className="text-2xl font-black text-emerald-400 -mt-1 italic">jaz2307</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto bg-slate-800/80 rounded-[40px] shadow-2xl overflow-hidden border border-white/10 backdrop-blur-xl relative z-20">
+        
+        {/* TV Header */}
+        <div className="bg-gradient-to-r from-slate-800 to-slate-900 p-6 border-b border-white/5 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <div className="bg-red-600 p-2 rounded-lg shadow-lg shadow-red-900/20">
+              <Video className="text-white" size={24} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="bg-emerald-500 text-[10px] text-white font-black px-1.5 py-0.5 rounded italic">JAZ2307</span>
+                <h1 className="text-xl font-bold tracking-tight text-white uppercase leading-none">
+                  Әдебиет арнасы
+                </h1>
+              </div>
+              <p className="text-slate-400 text-xs font-medium uppercase tracking-widest">ТАҚЫРЫП: Б. Соқпақбаев «Ағаттықтың азабы»</p>
+            </div>
+          </div>
+          <div className="bg-slate-700/50 px-5 py-2 rounded-2xl border border-white/10 flex items-center gap-3">
+            <span className="text-xs text-slate-400 font-bold uppercase tracking-tighter italic">Rating:</span>
+            <span className="text-2xl font-black text-emerald-400">{score}</span>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="p-6 md:p-10 min-h-[500px]">
+          
+          {activeTask === 'start' && (
+            <div className="text-center space-y-8 py-10">
+              <div className="relative inline-block">
+                <div className="w-36 h-36 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto border-4 border-emerald-500/20 animate-pulse">
+                  <div className="flex flex-col items-center">
+                    <span className="text-5xl mb-1">🎬</span>
+                    <span className="text-[10px] font-black text-emerald-400 tracking-[0.2em] italic">JAZ2307</span>
+                  </div>
+                </div>
+                <div className="absolute top-0 right-0 bg-red-600 text-[10px] font-bold px-2 py-1 rounded text-white uppercase tracking-tighter shadow-lg shadow-red-900/40">On Air</div>
+              </div>
+              <h2 className="text-4xl font-black text-white leading-tight">
+                ҚОЖА: <span className="text-emerald-400 text-3xl block mt-2 uppercase italic tracking-tighter">Өкініш пен азаптану</span>
+              </h2>
+              <p className="text-lg text-slate-300 max-w-lg mx-auto leading-relaxed font-light">
+                <span className="text-emerald-400 font-bold tracking-widest">JAZ2307</span> студиясына қош келдіңіз! Бүгін біз кейіпкер Қожаның ең ауыр өкініш сәтін бірге талдаймыз.
+              </p>
+              <button 
+                onClick={() => setActiveTask('sequence')}
+                className="group relative bg-emerald-600 hover:bg-emerald-500 text-white px-12 py-5 rounded-2xl text-xl font-black transition-all transform hover:scale-105 shadow-[0_0_30px_rgba(16,185,129,0.3)] flex items-center gap-3 mx-auto uppercase italic tracking-tighter"
+              >
+                Эфирді бастау <ChevronRight className="group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+          )}
+
+          {activeTask === 'sequence' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3 text-emerald-400 font-black uppercase tracking-widest text-sm">
+                  <ClipboardList size={20} /> 01 Тапсырма: Сценарий реті
+                </div>
+                <div className="text-[10px] text-slate-500 font-mono italic">Production: JAZ2307_LABS</div>
+              </div>
+              <div className="space-y-3">
+                {sequence.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleSequenceClick(item.id)}
+                    className={`w-full text-left p-5 rounded-2xl border-2 transition-all flex justify-between items-center group ${
+                      item.order 
+                        ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300' 
+                        : 'border-slate-700 bg-slate-800/50 hover:border-emerald-500/50 hover:bg-slate-700/50 text-slate-300'
+                    }`}
+                  >
+                    <span className="font-medium">{item.text}</span>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg transition-all ${
+                      item.order ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-900/40' : 'bg-slate-700 text-slate-500 group-hover:bg-slate-600'
+                    }`}>
+                      {item.order || '?'}
+                    </div>
+                  </button>
+                ))}
+              </div>
+              {nextOrder > 5 && (
+                <div className="mt-8 flex justify-center animate-bounce">
+                   <button 
+                    onClick={() => setActiveTask('matching')}
+                    className="bg-white text-slate-900 px-10 py-4 rounded-2xl font-black hover:bg-slate-200 flex items-center gap-2 uppercase tracking-tighter italic"
+                  >
+                    Келесі кезең <ChevronRight />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTask === 'matching' && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 text-emerald-400 font-black uppercase tracking-widest text-sm mb-8">
+                <Users size={20} /> 02 Тапсырма: Студия қонақтары
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  {characters.map((char) => (
+                    <button
+                      key={char.id}
+                      disabled={matches.includes(char.id)}
+                      onClick={() => handleMatch('left', char.id)}
+                      className={`w-full p-5 rounded-2xl border-2 transition-all font-black text-center uppercase tracking-tight h-20 flex items-center justify-center ${
+                        matches.includes(char.id) ? 'bg-slate-900/50 border-slate-800 text-slate-600 opacity-30 scale-95' :
+                        matchSelection.left === char.id ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)]' :
+                        'bg-slate-700 border-slate-600 hover:border-emerald-500/50 hover:bg-slate-600'
+                      }`}
+                    >
+                      {char.name}
+                    </button>
+                  ))}
+                </div>
+                <div className="space-y-3">
+                  {actions.map((act) => (
+                    <button
+                      key={act.action}
+                      disabled={matches.some(m => characters.find(c => c.id === m).action === act.action)}
+                      onClick={() => handleMatch('right', act.action)}
+                      className={`w-full p-5 rounded-2xl border-2 transition-all text-[11px] text-center font-medium min-h-[80px] flex items-center justify-center uppercase leading-tight tracking-tighter ${
+                        matches.some(m => characters.find(c => c.id === m).action === act.action) ? 'bg-slate-900/50 border-slate-800 text-slate-600 opacity-30 scale-95' :
+                        matchSelection.right === act.action ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)]' :
+                        'bg-slate-700 border-slate-600 hover:border-emerald-500/50 hover:bg-slate-600 text-slate-300'
+                      }`}
+                    >
+                      {act.action}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {matches.length === 4 && (
+                <div className="mt-8 flex justify-center animate-bounce">
+                   <button 
+                    onClick={() => setActiveTask('reflection')}
+                    className="bg-white text-slate-900 px-10 py-4 rounded-2xl font-black hover:bg-slate-200 flex items-center gap-2 uppercase tracking-tighter italic"
+                  >
+                    Финалға өту <ChevronRight />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTask === 'reflection' && (
+            <div className="space-y-6 text-center">
+              <div className="flex justify-center gap-3 text-emerald-400 font-black uppercase tracking-widest text-sm mb-8">
+                <Heart className="text-red-500 animate-pulse" /> 03 Тапсырма: Ішкі монолог
+              </div>
+              <div className="bg-black/40 p-8 rounded-[32px] border border-emerald-500/30 text-left relative overflow-hidden group">
+                <div className="absolute top-4 right-4 text-emerald-500/20 italic font-black text-4xl select-none group-hover:scale-110 transition-transform">"</div>
+                <p className="italic text-xl text-slate-200 leading-relaxed relative z-10 font-light">
+                  «Жүрегімді біреу ұстарамен тіліп жібергендей болды... Маматай, қойшы. Ендігәрі...»
+                </p>
+              </div>
+              <h3 className="text-2xl font-black mt-10 text-white uppercase tracking-tighter italic">Бұл үзіндідегі Қожаның басты сезімі:</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                {[
+                  { text: 'Қорқыныш пен үрей', correct: false },
+                  { text: 'Өкініш пен азаптану', correct: true },
+                  { text: 'Ашу мен ыза', correct: false },
+                  { text: 'Жеңілдік пен қуаныш', correct: false }
+                ].map((opt, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      if (opt.correct) {
+                        setScore(s => s + 20);
+                        setShowFeedback('correct');
+                      } else {
+                        setShowFeedback('wrong');
+                      }
+                    }}
+                    className="p-5 rounded-2xl border-2 border-slate-700 bg-slate-800 hover:bg-emerald-600 hover:border-emerald-500 text-slate-300 hover:text-white transition-all font-black uppercase tracking-tighter italic"
+                  >
+                    {opt.text}
+                  </button>
+                ))}
+              </div>
+              
+              {showFeedback === 'correct' && (
+                <div className="mt-10 p-10 bg-gradient-to-br from-emerald-600 to-emerald-800 text-white rounded-[40px] shadow-[0_20px_50px_rgba(16,185,129,0.3)] border border-white/20 relative overflow-hidden">
+                  <div className="absolute -top-10 -left-10 text-white/5 font-black text-9xl italic select-none">JAZ</div>
+                  <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 relative z-10">
+                    <CheckCircle2 size={32} />
+                  </div>
+                  <h2 className="text-4xl font-black mb-2 uppercase italic tracking-tighter relative z-10">Эфир сәтті аяқталды!</h2>
+                  <p className="text-xl opacity-90 mb-6 font-light relative z-10">Рейтингіңіз: <span className="font-mono text-4xl font-black ml-2 text-emerald-300">{score}</span></p>
+                  <p className="bg-black/20 p-4 rounded-2xl text-sm italic relative z-10">«Қожа секілді әр қателіктен сабақ ала білу — нағыз ерлік.»</p>
+                  <button 
+                    onClick={resetGame}
+                    className="mt-8 bg-white text-emerald-700 px-8 py-3 rounded-full font-black flex items-center gap-2 mx-auto hover:bg-slate-100 transition-all active:scale-95 uppercase text-xs tracking-widest relative z-10 italic"
+                  >
+                    <RefreshCcw size={16} /> Қайта қосылу
+                  </button>
+                </div>
+              )}
+              {showFeedback === 'wrong' && (
+                <div className="mt-6 p-4 bg-red-600/20 text-red-400 rounded-2xl flex items-center justify-center gap-2 border border-red-600/30 animate-shake">
+                  <AlertCircle /> Студияда техникалық ақау! Қожаның жүрегі неге «тілінгендей» болды? Қайта ойлан.
+                </div>
+              )}
+            </div>
+          )}
+
+        </div>
+        
+        {/* TV Footer Bar */}
+        <div className="bg-black/50 p-4 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1 font-black text-emerald-500 italic underline underline-offset-4 decoration-emerald-800/50">JAZ2307_SYSTEM</span>
+            <div className="w-[1px] h-3 bg-white/10 hidden md:block"></div>
+            <span className="flex items-center gap-1"><Radio size={12} className="text-red-600 animate-pulse" /> Signal: Stable</span>
+            <span className="flex items-center gap-1"><Maximize size={12} /> 4K_UHD</span>
+          </div>
+          <div className="flex gap-2">
+            {[1, 2, 3].map(i => (
+              <div key={i} className={`w-10 h-1 bg-gradient-to-r ${activeTask === ['sequence', 'matching', 'reflection'][i-1] ? 'from-emerald-500 to-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'from-slate-700 to-slate-800'}`}></div>
+            ))}
+          </div>
+          <div className="flex items-center gap-1 opacity-60 italic tracking-tighter">
+            Digital Stream by JAZ2307 © 2024
+          </div>
+        </div>
+      </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-5px); }
+          75% { transform: translateX(5px); }
+        }
+        .animate-shake {
+          animation: shake 0.2s cubic-bezier(.36,.07,.19,.97) both;
+        }
+      `}} />
+    </div>
+  );
+};
+
+export default App;
